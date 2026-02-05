@@ -1,0 +1,14 @@
+[
+  {
+    "timestamp": 1770293577,
+    "mounts": {
+      "/mnt/books": 38799151202304,
+      "/mnt/nfs1/code": 38799151202304,
+      "/mnt/nfs1/docs": 38799151202304,
+      "/mnt/nfs1/docs_work": 38799151202304,
+      "/mnt/nfs1/iso": 38799151202304,
+      "/mnt/nfs1/system_setup": 38799151202304
+    },
+    "total": 232794907213824
+  }
+]
