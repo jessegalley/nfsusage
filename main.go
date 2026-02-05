@@ -20,6 +20,27 @@ type UsageEntry struct {
 	Total     int64            `json:"total"`
 }
 
+// isSnapshotMount returns true if the mount path contains ".snapshot"
+func isSnapshotMount(mountPoint string) bool {
+	return strings.Contains(mountPoint, ".snapshot")
+}
+
+// filterEntry returns a copy of the entry with .snapshot mounts removed and total recalculated
+func filterEntry(entry UsageEntry) UsageEntry {
+	filtered := UsageEntry{
+		Timestamp: entry.Timestamp,
+		Mounts:    make(map[string]int64),
+		Total:     0,
+	}
+	for mount, bytes := range entry.Mounts {
+		if !isSnapshotMount(mount) {
+			filtered.Mounts[mount] = bytes
+			filtered.Total += bytes
+		}
+	}
+	return filtered
+}
+
 func main() {
 	var filePath string
 	var compare bool
@@ -87,13 +108,14 @@ func main() {
 
 	// Output to stdout
 	if compare && len(entries) > 1 {
-		printComparison(entries[0], currentEntry)
+		// Filter oldest entry to exclude any .snapshot mounts that may exist in the JSON
+		printComparison(filterEntry(entries[0]), currentEntry)
 	} else {
 		printCurrent(currentEntry)
 	}
 }
 
-// getNFSMounts parses /proc/mounts to find NFS mount points
+// getNFSMounts parses /proc/mounts to find NFS mount points (excludes .snapshot mounts)
 func getNFSMounts() ([]string, error) {
 	file, err := os.Open("/proc/mounts")
 	if err != nil {
@@ -108,7 +130,7 @@ func getNFSMounts() ([]string, error) {
 		if len(fields) >= 3 {
 			fsType := fields[2]
 			mountPoint := fields[1]
-			if fsType == "nfs" || fsType == "nfs4" {
+			if (fsType == "nfs" || fsType == "nfs4") && !isSnapshotMount(mountPoint) {
 				mounts = append(mounts, mountPoint)
 			}
 		}
